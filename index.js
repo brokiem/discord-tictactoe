@@ -54,16 +54,36 @@ client.on(Events.InteractionCreate, async i => {
         return
     }
 
+    clearTimeout(game.get('timeoutId'))
+    game.set('timeoutId', setTimeout(() => {
+        cleanGame(messageId)
+    }, 60000))
+
     game.get('board').set(columnMap.get(i.customId.replaceAll(game.get('uid') + "-", "")), game.get('turn') === P1 ? "X" : "O")
     game.set('turn', game.get('turn') === P1 ? P2 : P1)
 
-    i.update({
-        content: i.message.content + (game.get('isAi') ? "\n<a:loading:1032708714605592596> **AI is thinking...**" : ""),
-        components: updateBoard(game.get('board'), game.get('uid')),
-        allowedMentions: {repliedUser: false}
-    })
+    const turnText = game.get('turn') === P1 ? ":regional_indicator_x: **" + (await client.users.fetch(game.get('players').get(P1))).username + " turn**" : ":regional_indicator_o: **" + (await client.users.fetch(game.get('players').get(P2))).username + " turn**"
 
     if (game.get('isAi')) {
+        i.update({
+            content: i.message.content + (game.get('isAi') ? "\n<a:loading:1032708714605592596> **AI is thinking...**" : ""),
+            components: updateBoard(game.get('board'), game.get('uid')),
+            allowedMentions: {repliedUser: false}
+        })
+    } else {
+        i.update({
+            content: i.message.content.replaceAll(i.message.content.split("\n")[1], turnText) + (game.get('isAi') ? "\n<a:loading:1032708714605592596> **AI is thinking...**" : ""),
+            components: updateBoard(game.get('board'), game.get('uid')),
+            allowedMentions: {repliedUser: false}
+        })
+    }
+
+    if (game.get('isAi')) {
+        clearTimeout(game.get('timeoutId'))
+        game.set('timeoutId', setTimeout(() => {
+            cleanGame(messageId)
+        }, 60000))
+
         try {
             const pos = await aiInstance.play(Array.from(game.get('board').values()))
 
@@ -85,13 +105,13 @@ client.on(Events.InteractionCreate, async i => {
         }
     }
 
-    const winner = await calculateWinner(Array.from(game.get('board').values()))
+    const winner = calculateWinner(Array.from(game.get('board').values()))
     if (winner !== " ") {
         const userId = game.get('players').get(winner === "X" ? P1 : P2)
         const user = await client.users.fetch(userId)
 
         await i.message.edit({
-            content: i.message.content.replaceAll("\n<a:loading:1032708714605592596> **AI is thinking...**", "") + "\n:trophy: **" + user.username + " won!**",
+            content: i.message.content.replaceAll(i.message.content.split("\n")[1], "").replaceAll(i.message.content.split("\n")[2], "").replaceAll("\n", "") + "\n:trophy: **" + user.username + " won!**",
             components: updateBoard(game.get('board'), game.get('uid')),
             allowedMentions: {repliedUser: false}
         })
@@ -102,7 +122,7 @@ client.on(Events.InteractionCreate, async i => {
 
     if (!Array.from(game.get('board').values()).includes(" ")) {
         await i.message.edit({
-            content: i.message.content.replaceAll("\n<a:loading:1032708714605592596> **AI is thinking...**", "") + "\n:thread: **Game Tie!**",
+            content: i.message.content.replaceAll(i.message.content.split("\n")[1], "").replaceAll(i.message.content.split("\n")[2], "").replaceAll("\n", "") + "\n:thread: **Game Tie!**",
             components: updateBoard(game.get('board'), game.get('uid')),
             allowedMentions: {repliedUser: false}
         })
@@ -125,7 +145,7 @@ client.on(Events.MessageCreate, async msg => {
             games.set(message.id, gameMap)
 
             await message.edit({
-                content: msg.author.username + " playing TicTacToe with " + client.user.username + " (AI)",
+                content: msg.author.username + " playing TicTacToe with " + client.user.username + " (AI)\n:alarm_clock: **Game expires in 1 minute if none interacted**",
                 components: drawBoard(gameMap.get("board"), gameMap.get("uid")),
                 allowedMentions: {repliedUser: false}
             })
@@ -141,7 +161,7 @@ client.on(Events.MessageCreate, async msg => {
         games.set(message.id, gameMap)
 
         await message.edit({
-            content: msg.author.username + " playing TicTacToe with " + user.username,
+            content: msg.author.username + " playing TicTacToe with " + user.username + "\n:regional_indicator_x: **" + msg.author.username + " turn!**\n:alarm_clock: **Game expires in 1 minute if none interacted**",
             components: drawBoard(gameMap.get("board"), gameMap.get("uid")),
             allowedMentions: {repliedUser: false}
         })
@@ -161,6 +181,9 @@ function createGame(messageId, player1, player2, isAi) {
             .set(P1, player1).set(player1, P1)
             .set(P2, player2).set(player2, P2))
         .set('isAi', isAi)
+        .set('timeoutId', setTimeout(() => {
+            cleanGame(messageId)
+        }, 60000))
 
     return gameMap
 }
@@ -180,11 +203,8 @@ function calculateWinner(squares) {
     ]
 
     for (let i = 0; i < winningConditions.length; i++) {
-        const [a, b, c] = winningConditions[i]
-        if (squares[a] && squares[a] === squares[b] && squares[a] === squares[c]) {
-            if (squares[a] !== "⠀") {
-                return squares[a]
-            }
+        if (squares[winningConditions[i][0]] !== " " && (squares[winningConditions[i][0]] === squares[winningConditions[i][1]]) && (squares[winningConditions[i][1]] === squares[winningConditions[i][2]])) {
+            return squares[winningConditions[i][0]]
         }
     }
 
@@ -281,6 +301,7 @@ function updateBoard(boardMap, uid) {
 }
 
 function cleanGame(gameId) {
+    clearTimeout(games.get(gameId).get('timeoutId'))
     games.delete(gameId)
 }
 
