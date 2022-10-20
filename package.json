@@ -1,0 +1,20 @@
+{
+  "name": "discord-tictactoe",
+  "version": "1.0.0",
+  "description": "Discord tictactoe minigame bot",
+  "main": "index.js",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/brokiem/discord-tictactoe.git"
+  },
+  "author": "brokiem",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/brokiem/discord-tictactoe/issues"
+  },
+  "homepage": "https://github.com/brokiem/discord-tictactoe#readme",
+  "dependencies": {
+    "discord.js": "^14.6.0",
+    "tictactoe-complex-ai": "^1.0.1"
+  }
+}
