@@ -64,6 +64,31 @@ client.on(Events.InteractionCreate, async i => {
 
     const turnText = game.get('turn') === P1 ? ":regional_indicator_x: **" + (await client.users.fetch(game.get('players').get(P1))).username + " turn**" : ":regional_indicator_o: **" + (await client.users.fetch(game.get('players').get(P2))).username + " turn**"
 
+    // calculate winner on first move
+    let winner = calculateWinner(Array.from(game.get('board').values()))
+    if (winner !== " ") {
+        const userId = game.get('players').get(winner === "X" ? P1 : P2)
+        const user = await client.users.fetch(userId)
+
+        await i.update({
+            content: i.message.content.replaceAll(i.message.content.split("\n")[1], "").replaceAll(i.message.content.split("\n")[2], "").replaceAll("\n", "") + "\n:trophy: **" + user.username + " won!**",
+            components: updateBoard(game.get('board'), game.get('uid')),
+            allowedMentions: {repliedUser: false}
+        })
+
+        cleanGame(i.message.id)
+        return;
+    }
+    if (!Array.from(game.get('board').values()).includes(" ")) {
+        await i.update({
+            content: i.message.content.replaceAll(i.message.content.split("\n")[1], "").replaceAll(i.message.content.split("\n")[2], "").replaceAll("\n", "") + "\n:thread: **Game Tie!**",
+            components: updateBoard(game.get('board'), game.get('uid')),
+            allowedMentions: {repliedUser: false}
+        })
+        cleanGame(i.message.id)
+        return
+    }
+
     if (game.get('isAi')) {
         i.update({
             content: i.message.content + (game.get('isAi') ? "\n<a:loading:1032708714605592596> **AI is thinking...**" : ""),
@@ -105,7 +130,8 @@ client.on(Events.InteractionCreate, async i => {
         }
     }
 
-    const winner = calculateWinner(Array.from(game.get('board').values()))
+    // calculate winner on second move
+    winner = calculateWinner(Array.from(game.get('board').values()))
     if (winner !== " ") {
         const userId = game.get('players').get(winner === "X" ? P1 : P2)
         const user = await client.users.fetch(userId)
@@ -119,7 +145,6 @@ client.on(Events.InteractionCreate, async i => {
         cleanGame(i.message.id)
         return;
     }
-
     if (!Array.from(game.get('board').values()).includes(" ")) {
         await i.message.edit({
             content: i.message.content.replaceAll(i.message.content.split("\n")[1], "").replaceAll(i.message.content.split("\n")[2], "").replaceAll("\n", "") + "\n:thread: **Game Tie!**",
@@ -203,8 +228,11 @@ function calculateWinner(squares) {
     ]
 
     for (let i = 0; i < winningConditions.length; i++) {
-        if (squares[winningConditions[i][0]] !== " " && (squares[winningConditions[i][0]] === squares[winningConditions[i][1]]) && (squares[winningConditions[i][1]] === squares[winningConditions[i][2]])) {
-            return squares[winningConditions[i][0]]
+        const [a, b, c] = winningConditions[i]
+        if (squares[a] && squares[a] === squares[b] && squares[a] === squares[c]) {
+            if (squares[a] !== "⠀") {
+                return squares[a]
+            }
         }
     }
 
