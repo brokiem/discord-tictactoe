@@ -26,7 +26,7 @@ const columnMap = new Map([
 const aiInstance = ai.createAI({
     level: 'expert',
     empty: " ",
-    minResponseTime: 80,
+    minResponseTime: 200,
     maxResponseTime: 8000
 })
 
@@ -175,6 +175,20 @@ client.on(Events.MessageCreate, async msg => {
                 allowedMentions: {repliedUser: false}
             })
 
+            await message.edit({
+                content: msg.author.username + " playing TicTacToe with " + client.user.username + " (AI)\n:alarm_clock: **Game expires in 1 minute if none interacted**",
+                components: drawBoard(gameMap.get("board"), gameMap.get("uid"), 0),
+                allowedMentions: {repliedUser: false}
+            })
+
+            setTimeout(async () => {
+                await message.edit({
+                    content: msg.author.username + " playing TicTacToe with " + client.user.username + " (AI)\n:alarm_clock: **Game expires in 1 minute if none interacted**",
+                    components: drawBoard(gameMap.get("board"), gameMap.get("uid")),
+                    allowedMentions: {repliedUser: false}
+                })
+            }, 50)
+
             return
         }
 
@@ -190,6 +204,20 @@ client.on(Events.MessageCreate, async msg => {
             components: drawBoard(gameMap.get("board"), gameMap.get("uid")),
             allowedMentions: {repliedUser: false}
         })
+
+        await message.edit({
+            content: msg.author.username + " playing TicTacToe with " + user.username + "\n:regional_indicator_x: **" + msg.author.username + " turn!**\n:alarm_clock: **Game expires in 1 minute if none interacted**",
+            components: drawBoard(gameMap.get("board"), gameMap.get("uid"), 0),
+            allowedMentions: {repliedUser: false}
+        })
+
+        setTimeout(async () => {
+            await message.edit({
+                content: msg.author.username + " playing TicTacToe with " + user.username + "\n:regional_indicator_x: **" + msg.author.username + " turn!**\n:alarm_clock: **Game expires in 1 minute if none interacted**",
+                components: drawBoard(gameMap.get("board"), gameMap.get("uid")),
+                allowedMentions: {repliedUser: false}
+            })
+        }, 50)
     }
 })
 
@@ -239,13 +267,19 @@ function calculateWinner(squares) {
     return " ";
 }
 
-function drawBoard(boardMap, uid) {
+function drawBoard(boardMap, uid, index = 1) {
     // first row
     let rowMap = new Map()
     for (let i = 0; i < 3; i++) {
         boardMap.set(i, " ")
-        rowMap.set("c" + (i + 1), new ButtonBuilder().setCustomId(uid + "-c" + (i + 1))
-            .setLabel((i + 1).toString()).setStyle(ButtonStyle.Secondary))
+
+        if (index === 0) {
+            rowMap.set("c" + (i + 1), new ButtonBuilder().setCustomId(uid + "-c" + (i + 1))
+                .setLabel((i + 1).toString()).setStyle(ButtonStyle.Success))
+        } else {
+            rowMap.set("c" + (i + 1), new ButtonBuilder().setCustomId(uid + "-c" + (i + 1))
+                .setLabel((i + 1).toString()).setStyle(ButtonStyle.Secondary))
+        }
     }
     const row1 = new ActionRowBuilder().addComponents(Array.from(rowMap.values()))
 
@@ -253,8 +287,13 @@ function drawBoard(boardMap, uid) {
     rowMap = new Map()
     for (let i = 3; i < 6; i++) {
         boardMap.set(i, " ")
-        rowMap.set("c" + (i + 1), new ButtonBuilder().setCustomId(uid + "-c" + (i + 1))
-            .setLabel((i + 1).toString()).setStyle(ButtonStyle.Secondary))
+        if (index === 0) {
+            rowMap.set("c" + (i + 1), new ButtonBuilder().setCustomId(uid + "-c" + (i + 1))
+                .setLabel((i + 1).toString()).setStyle(ButtonStyle.Success))
+        } else {
+            rowMap.set("c" + (i + 1), new ButtonBuilder().setCustomId(uid + "-c" + (i + 1))
+                .setLabel((i + 1).toString()).setStyle(ButtonStyle.Secondary))
+        }
     }
     const row2 = new ActionRowBuilder().addComponents(Array.from(rowMap.values()))
 
@@ -262,8 +301,13 @@ function drawBoard(boardMap, uid) {
     rowMap = new Map()
     for (let i = 6; i < 9; i++) {
         boardMap.set(i, " ")
-        rowMap.set("c" + (i + 1), new ButtonBuilder().setCustomId(uid + "-c" + (i + 1))
-            .setLabel((i + 1).toString()).setStyle(ButtonStyle.Secondary))
+        if (index === 0) {
+            rowMap.set("c" + (i + 1), new ButtonBuilder().setCustomId(uid + "-c" + (i + 1))
+                .setLabel((i + 1).toString()).setStyle(ButtonStyle.Success))
+        } else {
+            rowMap.set("c" + (i + 1), new ButtonBuilder().setCustomId(uid + "-c" + (i + 1))
+                .setLabel((i + 1).toString()).setStyle(ButtonStyle.Secondary))
+        }
     }
     const row3 = new ActionRowBuilder().addComponents(Array.from(rowMap.values()))
 
