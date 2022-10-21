@@ -3,6 +3,9 @@
   "version": "1.0.0",
   "description": "Discord tictactoe minigame bot",
   "main": "index.js",
+  "scripts": {
+    "start": "node index.js"
+  },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/brokiem/discord-tictactoe.git"
